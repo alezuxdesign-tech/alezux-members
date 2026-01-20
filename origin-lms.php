@@ -5,7 +5,6 @@
  * Description: Funcionalidades personalizadas modularizadas.
  * Version:     2.0.1
  * Author:      Alezux Design
- * Author URI:  https://alezuxdesign.com
  * License:     GPL v2 or later
  */
 
