@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Custom Functions Origin LMS
+Plugin Name: Alezux Members
 Description: Funcionalidades personalizadas modularizadas.
 Version: 2.0.1
 Author: <a href="https://alezuxdesign.com">Alezux Design</a>
