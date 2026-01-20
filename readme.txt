@@ -3,7 +3,7 @@ Contributors: Alezux Design
 Tags: lms, learndash, custom, crm, finance
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 2.0
+Stable tag: 2.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 
