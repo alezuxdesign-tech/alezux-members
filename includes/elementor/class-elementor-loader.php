@@ -56,7 +56,7 @@ class Origin_LMS_Elementor {
         $elements_manager->add_category(
             'origin-lms',
             [
-                'title' => esc_html__( 'Origin LMS', 'origin-lms' ),
+                'title' => esc_html__( 'Alezux Members', 'alezux-members' ),
                 'icon'  => 'fa fa-graduation-cap',
             ]
         );
