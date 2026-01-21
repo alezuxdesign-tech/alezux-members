@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Alezux Members
  * Plugin URI:  https://github.com/alezuxdesign-tech/members
- * Description: Funcionalidades personalizadas modularizadas.
+ * Description: Trabajo desarrollado por una empresa integral en desarrollo de aplicaciones personalizadas.
  * Version:     2.0.5
  * Author:      Alezux Design
  * License:     GPL v2 or later
