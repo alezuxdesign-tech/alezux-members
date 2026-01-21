@@ -424,7 +424,10 @@ add_shortcode('admin_gestor_permisos', function() {
                 if(res.success) { 
                     showNotification('Contraseña actualizada y enviada al usuario');
                     $('#new_user_pass').val('');
-                } else { showNotification('Error al actualizar', 'error'); }
+                } else { 
+                    // Mostrar el mensaje de error específico que viene del servidor (ej: fallo de wp_mail)
+                    showNotification(res.data || 'Error al actualizar', 'error'); 
+                }
             });
         });
 
@@ -789,7 +792,12 @@ add_action('wp_ajax_gptwp_quick_action', function() {
                 $message .= "Puedes acceder aquí: https://academia.cdibusinessschool.com/";
 
                 // Enviamos el correo
-                wp_mail($to, $subject, $message);
+                $headers = array('Content-Type: text/plain; charset=UTF-8');
+                $sent = wp_mail($to, $subject, $message, $headers);
+                
+                if(!$sent) {
+                    wp_send_json_error('Contraseña cambiada, pero falló el envío del correo (wp_mail devolvió false).');
+                }
             }
             break;
             
