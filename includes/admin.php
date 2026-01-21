@@ -775,28 +775,26 @@ add_action('wp_ajax_gptwp_quick_action', function() {
             // 1. Cambiamos la contraseña
             wp_set_password($value, $user_id);
 
-            // 2. Preparamos el correo
+            // 2. Preparamos el correo (HTML)
             $user_info = get_userdata($user_id);
             if ($user_info) {
-                $to = $user_info->user_email;
-                $subject = 'Actualización de credenciales - ' . get_bloginfo('name');
-                
-                // Mensaje directo y claro, sin adornos de marketing
-                $message  = "Hola " . $user_info->display_name . ",\n\n";
-                $message .= "Un administrador ha actualizado tu contraseña de acceso.\n\n";
-                $message .= "Tus nuevas credenciales son:\n";
-                $message .= "----------------------------------\n";
-                $message .= "Usuario/Email: " . $to . "\n";
-                $message .= "Contraseña: " . $value . "\n";
-                $message .= "----------------------------------\n\n";
-                $message .= "Puedes acceder aquí: https://academia.cdibusinessschool.com/";
+                $email_data = [
+                    'name'        => $user_info->display_name,
+                    'username'    => $user_info->user_login, 
+                    'password'    => $value,
+                    'is_new_user' => true, // Para mostrar la caja de credenciales
+                    'login_url'   => 'https://academia.cdibusinessschool.com/'
+                ];
 
-                // Enviamos el correo
-                $headers = array('Content-Type: text/plain; charset=UTF-8');
-                $sent = wp_mail($to, $subject, $message, $headers);
+                $subject = 'Nuevas Credenciales de Acceso - ' . get_bloginfo('name');
+                $message = gptwp_get_email_template($email_data);
+                
+                // Enviamos el correo (HTML)
+                $headers = array('Content-Type: text/html; charset=UTF-8');
+                $sent = wp_mail($user_info->user_email, $subject, $message, $headers);
                 
                 if(!$sent) {
-                    wp_send_json_error('Contraseña cambiada, pero falló el envío del correo (wp_mail devolvió false).');
+                    wp_send_json_error('Contraseña cambiada, pero falló el envío del correo (Error Servidor).');
                 }
             }
             break;
