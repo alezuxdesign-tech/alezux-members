@@ -320,10 +320,6 @@ class Origin_LMS_Widget_Topic_List extends \Elementor\Widget_Base {
             $is_active = $topic->ID === $current_topic_id ? ' topic-activo' : '';
             // Updated image class to match shortcode: imagen-topic
             $thumbnail = get_the_post_thumbnail( $topic->ID, 'medium', ['class' => 'imagen-topic'] );
-            if( empty($thumbnail) ) {
-                // Also updated placeholder class
-                $thumbnail = '<img src="https://via.placeholder.com/80" class="imagen-topic placeholder">';
-            }
             
             $title = esc_html( get_the_title( $topic->ID ) );
             $author_id = $topic->post_author;
@@ -332,7 +328,11 @@ class Origin_LMS_Widget_Topic_List extends \Elementor\Widget_Base {
 
             echo '<div class="topic-item' . $is_active . '">';
             echo '<a href="' . esc_url( $permalink ) . '" class="topic-link">';
-            echo '<div class="topic-img">' . $thumbnail . '</div>';
+            
+            if ( ! empty( $thumbnail ) ) {
+                echo '<div class="topic-img">' . $thumbnail . '</div>';
+            }
+            
             echo '<div class="topic-info">';
             echo '<h3 class="topic-title">' . $title . '</h3>';
             echo '<span class="topic-author">Autor: ' . esc_html( $author_name ) . '</span>';
