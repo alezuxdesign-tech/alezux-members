@@ -428,6 +428,26 @@ add_shortcode('admin_gestor_permisos', function() {
             });
         });
 
+
+        // --- ACCIÓN: GENERAR CONTRASEÑA Y ENVIAR ---
+        $(document).on('click', '#btn_generate_pass', function() {
+            // 1. Generar contraseña aleatoria
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+            let pass = "";
+            for (let i = 0; i < 12; i++) {
+                pass += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            // 2. Llenar el input
+            $('#new_user_pass').val(pass);
+
+            // 3. Trigger automático
+            showNotification('Generando y enviando...', 'success');
+            setTimeout(() => {
+                $('#btn_reset_pass').click();
+            }, 500);
+        });
+
         // --- ACCIÓN: BLOQUEAR / DESBLOQUEAR ---
         $(document).on('click', '#toggle_block_user', function() {
             let toggle = $(this);
@@ -644,6 +664,7 @@ add_action('wp_ajax_gptwp_crm_load_full_profile', function() {
             <label>Cambio Rápido de Contraseña</label>
             <div class="password-input-group">
                 <input type="text" id="new_user_pass" placeholder="Nueva contraseña...">
+                <button id="btn_generate_pass" class="btn-mini-action" style="background:var(--accent-gold); color:#000; font-weight:bold;">Generar y Enviar</button>
                 <button id="btn_reset_pass" class="btn-mini-action">Actualizar</button>
             </div>
         </div>
