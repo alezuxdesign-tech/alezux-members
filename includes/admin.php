@@ -2157,6 +2157,17 @@ add_shortcode('dashboard-master', function() {
             transition: width 0.5s ease;
         }
 
+        /* Badge Count */
+        .gptwp-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #fff;
+            font-weight: 600;
+            display: inline-block;
+        }
+
         /* KPIs de Finanzas */
         .gptwp-kpi-grid {
             display: grid;
