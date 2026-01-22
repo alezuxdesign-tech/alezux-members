@@ -1472,9 +1472,10 @@ add_shortcode('finanzas_filtros', function() {
         /* Controles (Input Calendario Moderno) */
         .gptwp-fin-controls-wrapper { 
             display: flex; 
-            width: 100%; 
+            width: auto; 
             justify-content: flex-start; /* Alineación Izquierda Forzada */
-            margin-bottom: 10px;
+            margin-bottom: 0;
+            gap: 15px;
         }
 
         .gptwp-date-input-group { position: relative; display: flex; align-items: center; }
