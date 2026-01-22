@@ -1861,6 +1861,9 @@ add_shortcode('dashboard-master', function() {
                 <button class="gptwp-dash-tab" data-target="tab-email">
                     <span class="dashicons dashicons-email"></span> Email Marketing
                 </button>
+                <button class="gptwp-dash-tab" data-target="tab-logros">
+                    <span class="dashicons dashicons-awards"></span> Logros
+                </button>
             </div>
         </div>
 
