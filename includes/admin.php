@@ -1830,7 +1830,7 @@ add_action('wp_ajax_gptwp_get_finance_data', function() {
 });
 
 
-<?php
+
 // ... existing code ...
 
 // ==============================================================================
