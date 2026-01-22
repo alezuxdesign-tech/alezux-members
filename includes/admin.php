@@ -2157,8 +2157,8 @@ add_shortcode('dashboard-master', function() {
             transition: width 0.5s ease;
         }
 
-        /* Badge Count */
-        .gptwp-badge {
+        /* Badge Count (Renamed to prevent collisions) */
+        .gptwp-counter-pill {
             background: rgba(255,255,255,0.1);
             padding: 4px 10px;
             border-radius: 12px;
@@ -2166,6 +2166,7 @@ add_shortcode('dashboard-master', function() {
             color: #fff;
             font-weight: 600;
             display: inline-block;
+            position: static !important; /* Force static to prevent flying */
         }
 
         /* KPIs de Finanzas */
@@ -2578,7 +2579,7 @@ add_shortcode('admin_tabla_cursos', function() {
                                 <strong><?php echo esc_html($course->post_title); ?></strong>
                             </td>
                             <td>
-                                <span class="gptwp-badge"><?php echo $student_count; ?> Estudiantes</span>
+                                <span class="gptwp-counter-pill"><?php echo $student_count; ?> Estudiantes</span>
                             </td>
                             <td>
                                 <div style="display:flex; align-items:center; gap:10px;">
