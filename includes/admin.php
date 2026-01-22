@@ -1848,8 +1848,15 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
 
     ob_start();
     ?>
+    <!-- Buscador en tiempo real -->
+    <div style="margin-bottom: 15px; display:flex; gap:10px;">
+        <input type="text" id="gptwp-course-search" placeholder="Buscar estudiante por nombre o correo..." 
+               style="width:100%; padding:10px; background:#111; border:1px solid #444; color:#fff; border-radius:5px;"
+               onkeyup="gptwpFilterCourseTable()">
+    </div>
+
     <div style="overflow-x:auto;">
-        <table class="gptwp-crm-table" style="width:100%;">
+        <table id="gptwp-course-students-table" class="gptwp-crm-table" style="width:100%;">
             <thead>
                 <tr>
                     <th style="width:60px; text-align:center;">Foto</th>
@@ -1901,6 +1908,32 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
             </tbody>
         </table>
     </div>
+
+    <script>
+    function gptwpFilterCourseTable() {
+        var input, filter, table, tr, tdName, tdEmail, i, txtValueName, txtValueEmail;
+        input = document.getElementById("gptwp-course-search");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("gptwp-course-students-table");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 0; i < tr.length; i++) {
+            tdName = tr[i].getElementsByTagName("td")[1]; // Columna Nombre
+            tdEmail = tr[i].getElementsByTagName("td")[2]; // Columna Email
+            
+            if (tdName && tdEmail) {
+                txtValueName = tdName.textContent || tdName.innerText;
+                txtValueEmail = tdEmail.textContent || tdEmail.innerText;
+                
+                if (txtValueName.toUpperCase().indexOf(filter) > -1 || txtValueEmail.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+    </script>
     <?php
     $html = ob_get_clean();
     wp_send_json_success($html);
@@ -2653,7 +2686,7 @@ add_shortcode('admin_tabla_cursos', function() {
 
     <!-- MODAL DETALLES DEL CURSO -->
     <div id="gptwp_course_modal" class="gptwp-modal-overlay">
-        <div class="gptwp-modal-content" style="max-width:800px;">
+        <div class="gptwp-modal-content" style="max-width:1200px; width:95%;">
             <div class="gptwp-modal-header">
                 <h3 style="margin:0; color:#fff;">Detalle del Curso: <span id="modal_course_name_title">...</span></h3>
                 <button class="gptwp-modal-close" onclick="document.getElementById('gptwp_course_modal').style.display='none'">&times;</button>
