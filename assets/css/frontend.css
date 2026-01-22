@@ -841,3 +841,346 @@
 .apw-bar:hover {
     background: #fff;
 }
+
+/* --- 6. GESTOR DE LOGROS (Admin Frontend) --- */
+.gptwp-logros-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: var(--font-main);
+}
+
+.gptwp-title {
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #fff;
+    border-left: 5px solid var(--accent-gold);
+    padding-left: 15px;
+}
+
+.gptwp-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 900px) {
+    .gptwp-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gptwp-card.form-card,
+.gptwp-card.history-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.gptwp-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: var(--accent-gold);
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Formularios */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.form-group select,
+.form-group textarea,
+.form-group input[type="text"] {
+    width: 100%;
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.form-group select:focus,
+.form-group textarea:focus,
+.form-group input:focus {
+    border-color: var(--accent-gold);
+    outline: none;
+}
+
+/* User Search */
+.user-search-wrapper {
+    position: relative;
+}
+
+.user-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #222;
+    border: 1px solid #333;
+    border-top: none;
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.user-result-item {
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.user-result-item:hover {
+    background: #000;
+}
+
+.user-result-item img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.selected-user-display {
+    background: rgba(249, 177, 55, 0.1);
+    color: var(--accent-gold);
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--accent-gold);
+}
+
+.sel-remove {
+    cursor: pointer;
+}
+
+/* Image Upload */
+.image-upload-ui {
+    border: 2px dashed #444;
+    padding: 20px;
+    text-align: center;
+    border-radius: 12px;
+    background: #111;
+}
+
+.btn-select-img {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.img-preview-box {
+    margin-top: 15px;
+    position: relative;
+    display: inline-block;
+}
+
+.img-preview-box img {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.remove-img-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-publish {
+    width: 100%;
+    background: var(--accent-gold);
+    color: #000;
+    font-weight: 800;
+    padding: 15px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.btn-publish:hover {
+    box-shadow: 0 5px 20px rgba(249, 177, 55, 0.4);
+    background: #fff;
+}
+
+/* History List */
+.history-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-input,
+.filter-select {
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.history-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.logro-item-admin {
+    display: flex;
+    gap: 15px;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.logro-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.logro-content {
+    flex: 1;
+}
+
+.logro-meta {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.logro-msg {
+    font-size: 13px;
+    color: #ddd;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-mini {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-edit {
+    background: #333;
+    color: #fff;
+}
+
+.btn-delete {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff4d4d;
+}
+
+/* Modal Admin Styles */
+.admin-modal-size {
+    max-width: 600px;
+    height: auto;
+    max-height: 90vh;
+}
+
+.btn-fe-save {
+    background: var(--accent-gold);
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-fe-cancel {
+    background: transparent;
+    color: #ccc;
+    border: 1px solid #444;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.fe-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+}
+
+.fe-actions.center-actions {
+    justify-content: center;
+}
+
+.confirm-icon {
+    font-size: 40px;
+    color: var(--danger-red);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.confirm-modal-size {
+    max-width: 400px;
+    text-align: center;
+    padding: 30px;
+}
+
+.btn-fe-delete {
+    background: var(--danger-red);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
