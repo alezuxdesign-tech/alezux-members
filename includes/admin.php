@@ -2343,41 +2343,63 @@ add_shortcode('dashboard-master', function() {
 
     <!-- INTERACTIVIDAD JS (Simple Tab Switcher) -->
     <script>
-    <script>
-    // Ensure ajaxUrl is available globally for all functions
-    const ajaxUrl = "<?php echo admin_url('admin-ajax.php'); ?>";
+    // --- 0. Global Course Helpers (Exposed to Window) ---
+    // Defined globally so HTML onclick/onkeyup can access them immediately
+    var ajaxUrl = "<?php echo admin_url('admin-ajax.php'); ?>";
+    window.searchTimeout = null;
+
+    window.gptwpDebounceSearch = function(val, courseId) {
+        if(window.searchTimeout) clearTimeout(window.searchTimeout);
+        window.searchTimeout = setTimeout(function() {
+            gptwpLoadCoursePage(courseId, 1, val);
+        }, 500);
+    };
+
+    window.gptwpLoadCoursePage = function(courseId, page, searchVal) {
+        // Si no se pasa searchVal, tomamos el actual del input
+        if (typeof searchVal === 'undefined') {
+            var input = document.getElementById('gptwp-course-search-input');
+            searchVal = input ? input.value : '';
+        }
+
+        var container = document.getElementById('gptwp_course_modal_body');
+        if(container) container.style.opacity = '0.5';
+
+        var formData = new FormData();
+        formData.append('action', 'gptwp_get_course_details');
+        formData.append('course_id', courseId);
+        formData.append('page', page);
+        formData.append('search', searchVal);
+
+        fetch(ajaxUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(container) container.style.opacity = '1';
+            if(data.success) {
+                if(container) container.innerHTML = data.data;
+                // Re-enfocar input
+                var newInput = document.getElementById('gptwp-course-search-input');
+                if(newInput) {
+                    newInput.focus();
+                    var val = newInput.value;
+                    newInput.value = '';
+                    newInput.value = val;
+                }
+            } else {
+                alert('Error: ' + (data.data || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if(container) container.style.opacity = '1';
+        });
+    };
 
     document.addEventListener('DOMContentLoaded', function() {
-        // --- 0. Global Course Helpers (Exposed to Window) ---
-        window.searchTimeout = null; // Initialize globally
 
-        window.gptwpDebounceSearch = function(val, courseId) {
-            if(window.searchTimeout) clearTimeout(window.searchTimeout);
-            window.searchTimeout = setTimeout(function() {
-                gptwpLoadCoursePage(courseId, 1, val);
-            }, 500);
-        };
-
-        window.gptwpLoadCoursePage = function(courseId, page, searchVal) {
-            // Si no se pasa searchVal, tomamos el actual del input
-            if (typeof searchVal === 'undefined') {
-                var input = document.getElementById('gptwp-course-search-input');
-                searchVal = input ? input.value : '';
-            }
-
-            var container = document.getElementById('gptwp_course_modal_body');
-            if(container) container.style.opacity = '0.5';
-
-            var formData = new FormData();
-            formData.append('action', 'gptwp_get_course_details');
-            formData.append('course_id', courseId);
-            formData.append('page', page);
-            formData.append('search', searchVal);
-
-            fetch(ajaxUrl, { // Uses the global const defined above
-                method: 'POST',
-                body: formData
-            })
             .then(response => response.json())
             .then(data => {
                 if(container) container.style.opacity = '1';
