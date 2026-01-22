@@ -2143,6 +2143,20 @@ add_shortcode('dashboard-master', function() {
         .gptwp-tab-pane { display: none; animation: fadeIn 0.4s ease; }
         .gptwp-tab-pane.active { display: block; }
 
+        /* Barra de Progreso */
+        .gptwp-progress-bar-wrapper {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .gptwp-progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
         /* KPIs de Finanzas */
         .gptwp-kpi-grid {
             display: grid;
@@ -2508,16 +2522,15 @@ add_shortcode('admin_tabla_cursos', function() {
                         $course_id = $course->ID;
                         
                         // 1. Obtener Estudiantes (Método Directo DB para máxima fiabilidad)
-                        // A veces las funciones de LD fallan si la metadata no está indexada o cacheada.
-                        // Buscamos directamente en usermeta 'course_X_access_from'
                         global $wpdb;
-                        $student_count = $wpdb->get_var( $wpdb->prepare(
+                        $count_query = $wpdb->prepare(
                             "SELECT COUNT(user_id) FROM $wpdb->usermeta WHERE meta_key = %s",
                             'course_' . $course_id . '_access_from'
-                        ) );
+                        );
+                        $student_count = intval($wpdb->get_var($count_query)); // Force boolean/null to 0
                         
-                        // Fallback: Si da 0, intentamos con la API de LD por si acaso (ej: grupos)
-                        if (empty($student_count) && function_exists('learndash_get_users_for_course')) {
+                        // Fallback: Si da 0, intentamos con la API de LD
+                        if ($student_count === 0 && function_exists('learndash_get_users_for_course')) {
                             $student_count = count(learndash_get_users_for_course($course_id, array(), false));
                         }
                         
