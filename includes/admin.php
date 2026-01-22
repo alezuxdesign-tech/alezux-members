@@ -2507,22 +2507,19 @@ add_shortcode('admin_tabla_cursos', function() {
                     <?php else: foreach ($courses as $course): 
                         $course_id = $course->ID;
                         
-                        // 1. Obtener Estudiantes (Método Compatible LearnDash)
-                        // Intentamos usar funciones nativas de LD para mayor precisión
-                        $enrolled_users = [];
-                        if (function_exists('learndash_get_course_users_access_from_meta')) {
-                            $enrolled_users = learndash_get_course_users_access_from_meta($course_id);
+                        // 1. Obtener Estudiantes (Método Directo DB para máxima fiabilidad)
+                        // A veces las funciones de LD fallan si la metadata no está indexada o cacheada.
+                        // Buscamos directamente en usermeta 'course_X_access_from'
+                        global $wpdb;
+                        $student_count = $wpdb->get_var( $wpdb->prepare(
+                            "SELECT COUNT(user_id) FROM $wpdb->usermeta WHERE meta_key = %s",
+                            'course_' . $course_id . '_access_from'
+                        ) );
+                        
+                        // Fallback: Si da 0, intentamos con la API de LD por si acaso (ej: grupos)
+                        if (empty($student_count) && function_exists('learndash_get_users_for_course')) {
+                            $student_count = count(learndash_get_users_for_course($course_id, array(), false));
                         }
-                        // Fallback si la función devuelve algo raro o está vacía (intentar query manual mejorada)
-                        if (empty($enrolled_users)) {
-                            $user_query = new WP_User_Query([
-                                'meta_key' => 'course_'.$course_id.'_access_from',
-                                'fields'   => 'ID'
-                            ]);
-                            $enrolled_users = $user_query->get_results();
-                        }
-
-                        $student_count = count($enrolled_users);
                         
                         // 2. Calcular Progreso Global (Cacheado por 1 hora para rendimiento)
                         $transient_key = 'gptwp_course_progress_' . $course_id;
@@ -2530,20 +2527,22 @@ add_shortcode('admin_tabla_cursos', function() {
 
                         if ($avg_progress === false) {
                             if ($student_count > 0) {
+                                // Para el cálculo del promedio, si necesitamos los IDs, hacemos query ligera
+                                $enrolled_user_ids = $wpdb->get_col( $wpdb->prepare(
+                                    "SELECT user_id FROM $wpdb->usermeta WHERE meta_key = %s LIMIT 100", // Limit 100 para performance
+                                    'course_' . $course_id . '_access_from'
+                                ) );
+
                                 $total_percentage = 0;
-                                // Limitamos el cálculo a los primeros 100 estudiantes para no matar el servidor en vivo
-                                // Opcional: Ejecutar en background. Por ahora, sample de 100.
-                                $sample_users = array_slice($enrolled_users, 0, 100); 
+                                $count_sample = 0;
                                 
-                                foreach ($sample_users as $u_id) {
-                                    // Si $u_id es objeto (WP_User), sacar ID
-                                    $uid = is_object($u_id) ? $u_id->ID : $u_id;
-                                    
+                                foreach ($enrolled_user_ids as $uid) {
                                     $p = learndash_user_get_course_progress($uid, $course_id);
                                     $pct = isset($p['percentage']) ? $p['percentage'] : 0;
                                     $total_percentage += $pct;
+                                    $count_sample++;
                                 }
-                                $avg_progress = round($total_percentage / count($sample_users));
+                                $avg_progress = ($count_sample > 0) ? round($total_percentage / $count_sample) : 0;
                             } else {
                                 $avg_progress = 0;
                             }
