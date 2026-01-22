@@ -2019,7 +2019,12 @@ add_shortcode('dashboard-master', function() {
             cursor: pointer; display: flex; align-items: center; gap: 8px;
             transition: 0.3s;
         }
-        .gptwp-btn-action:hover { box-shadow: 0 0 15px rgba(249,177,55,0.4); transform: translateY(-2px); }
+        .gptwp-btn-action:hover {
+            box-shadow: 0 0 15px rgba(249,177,55,0.4) !important;
+            transform: translateY(-2px);
+            background: #fff !important;
+            color: #000 !important;
+        }
 
         /* MODAL ESTRUCTURA */
         .gptwp-modal {
