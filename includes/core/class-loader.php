@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Registra todas las acciones y filtros para el plugin.
  */
