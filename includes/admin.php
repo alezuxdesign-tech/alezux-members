@@ -1408,6 +1408,10 @@ add_action('wp_ajax_gptwp_load_dashboard_tab', function() {
             $content = do_shortcode('[admin_tabla_cursos]');
             break;
 
+        case 'tab-configuracion':
+            $content = gptwp_render_config_form();
+            break;
+
             
         default:
             wp_send_json_error('Tab desconocido');
@@ -1606,6 +1610,9 @@ add_shortcode('dashboard-master', function() {
                 <button class="gptwp-dash-tab" data-target="tab-logros">
                     <span class="dashicons dashicons-awards"></span> Logros
                 </button>
+                <button class="gptwp-dash-tab" data-target="tab-configuracion">
+                    <span class="dashicons dashicons-admin-generic"></span> Configuración
+                </button>
             </div>
         </div>
 
@@ -1666,6 +1673,14 @@ add_shortcode('dashboard-master', function() {
             <!-- TAB 4: LOGROS -->
             <div id="tab-logros" class="gptwp-tab-pane">
                 <?php echo do_shortcode('[admin_crear_logro]'); ?>
+            </div>
+
+            <!-- TAB 5: CONFIGURACIÓN -->
+            <div id="tab-configuracion" class="gptwp-tab-pane" data-loaded="false">
+                <div class="gptwp-loader-container" style="text-align:center; padding:50px; color:#666;">
+                    <span class="dashicons dashicons-update" style="animation: spin 1s infinite linear; font-size:40px; width:40px; height:40px;"></span>
+                    <p style="margin-top:10px;">Cargando Configuración...</p>
+                </div>
             </div>
 
         </div>
@@ -2130,5 +2145,205 @@ add_shortcode('admin_tabla_cursos', function() {
     <?php
     return ob_get_clean();
 });
+
+// ==============================================================================
+// === MÓDULO 5: CONFIGURACIÓN Y PERSONALIZACIÓN DEL DASHBOARD ===
+// ==============================================================================
+
+/**
+ * Renderiza el formulario de configuración del dashboard
+ */
+function gptwp_render_config_form() {
+    $config = get_option('gptwp_dashboard_config', [
+        'primary_color' => '#f9b137',
+        'accent_color'  => '#f9b137',
+        'bg_color'      => '#141414',
+        'text_color'    => '#ffffff',
+        'button_shadow' => true
+    ]);
+    
+    ob_start();
+    ?>
+    <div class="gptwp-config-form">
+        <h3 class="gptwp-box-title">Personalización Visual</h3>
+        <p style="color:#888; font-size:13px; margin-bottom:25px;">Define los colores y estilos globales para el dashboard maestro.</p>
+        
+        <div class="gptwp-config-grid">
+            <div class="gptwp-config-item">
+                <label>Color Principal (Títulos, Bordes, Iconos)</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="cfg_primary_color" value="<?php echo esc_attr($config['primary_color']); ?>">
+                    <span><?php echo esc_html($config['primary_color']); ?></span>
+                </div>
+            </div>
+            
+            <div class="gptwp-config-item">
+                <label>Color de Acento (Botones, Destacados)</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="cfg_accent_color" value="<?php echo esc_attr($config['accent_color']); ?>">
+                    <span><?php echo esc_html($config['accent_color']); ?></span>
+                </div>
+            </div>
+            
+            <div class="gptwp-config-item">
+                <label>Fondo General de Módulos</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="cfg_bg_color" value="<?php echo esc_attr($config['bg_color']); ?>">
+                    <span><?php echo esc_html($config['bg_color']); ?></span>
+                </div>
+            </div>
+            
+            <div class="gptwp-config-item">
+                <label>Color de Texto Principal</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="cfg_text_color" value="<?php echo esc_attr($config['text_color']); ?>">
+                    <span><?php echo esc_html($config['text_color']); ?></span>
+                </div>
+            </div>
+            
+            <div class="gptwp-config-item" style="grid-column: span 2; padding: 15px; background: #0a0a0a; border-radius: 8px; margin-top: 10px;">
+                <label style="display:flex; align-items:center; gap:12px; cursor:pointer; color:#fff; font-weight:600;">
+                    <input type="checkbox" id="cfg_button_shadow" <?php checked($config['button_shadow']); ?> style="width:20px; height:20px; accent-color:#f9b137;">
+                    Habilitar Sombreado (Neon/Shadow) en Botones
+                </label>
+                <p style="color:#666; font-size:11px; margin: 8px 0 0 32px;">Añade un efecto de profundidad y resplandor a los botones principales.</p>
+            </div>
+        </div>
+        
+        <div style="margin-top:40px; border-top: 1px solid #333; padding-top:20px; display:flex; justify-content: flex-end;">
+            <button class="gptwp-btn-save" id="btn_save_config">
+                <span class="dashicons dashicons-saved" style="margin-right:8px;"></span> GUARDAR CAMBIOS VISUALES
+            </button>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            // Actualizar hex text al cambiar color
+            $('.gptwp-config-item input[type="color"]').on('input', function() {
+                $(this).next('span').text($(this).val());
+            });
+
+            $('#btn_save_config').click(function() {
+                const btn = $(this);
+                const originalText = btn.html();
+                btn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Aplicando...');
+                
+                const configData = {
+                    action: 'gptwp_save_dashboard_config',
+                    primary_color: $('#cfg_primary_color').val(),
+                    accent_color: $('#cfg_accent_color').val(),
+                    bg_color: $('#cfg_bg_color').val(),
+                    text_color: $('#cfg_text_color').val(),
+                    button_shadow: $('#cfg_button_shadow').is(':checked') ? 'true' : 'false'
+                };
+                
+                $.post(ajaxurl, configData, function(res) {
+                    if(res.success) {
+                        btn.removeClass('gptwp-btn-save').css('background', '#4dff88').html('<span class="dashicons dashicons-yes"></span> ¡APLICADO!');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        alert('Error al guardar: ' + res.data);
+                        btn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+        });
+        </script>
+        
+        <style>
+        .gptwp-config-form { background: #141414; padding: 40px; border-radius: 20px; border: 1px solid #333; }
+        .gptwp-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .gptwp-config-item label { display: block; margin-bottom: 12px; color: #aaa; font-size: 13px; font-weight: bold; }
+        .color-picker-wrapper { display: flex; align-items: center; gap: 15px; background: #0a0a0a; padding: 8px 15px; border-radius: 8px; border: 1px solid #222; }
+        .color-picker-wrapper input[type="color"] { width: 40px; height: 30px; border: none; background: transparent; cursor: pointer; padding: 0; }
+        .color-picker-wrapper span { font-family: monospace; color: #888; font-size: 13px; text-transform: uppercase; }
+        </style>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Handler AJAX para guardar la configuración
+ */
+add_action('wp_ajax_gptwp_save_dashboard_config', function() {
+    if (!current_user_can('administrator')) wp_send_json_error('Acceso denegado');
+    
+    $config = [
+        'primary_color'  => sanitize_hex_color($_POST['primary_color']),
+        'accent_color'   => sanitize_hex_color($_POST['accent_color']),
+        'bg_color'       => sanitize_hex_color($_POST['bg_color']),
+        'text_color'     => sanitize_hex_color($_POST['text_color']),
+        'button_shadow'  => $_POST['button_shadow'] === 'true'
+    ];
+    
+    update_option('gptwp_dashboard_config', $config);
+    wp_send_json_success('Configuración guardada correctamente');
+});
+
+/**
+ * Inyecta las variables CSS dinámicas basadas en la configuración
+ */
+add_action('wp_head', function() {
+    $config = get_option('gptwp_dashboard_config');
+    if (!$config) return;
+    
+    $primary = $config['primary_color'] ?: '#f9b137';
+    $accent = $config['accent_color'] ?: '#f9b137';
+    $bg = $config['bg_color'] ?: '#141414';
+    $text = $config['text_color'] ?: '#ffffff';
+    $shadow = $config['button_shadow'] ? '0 5px 20px rgba('.implode(',', gptwp_hex2rgb($accent)).', 0.4)' : 'none';
+    
+    echo "<style id='gptwp-dynamic-styles'>
+    :root {
+        --accent-gold: $primary !important;
+        --card-bg: $bg !important;
+        --text-main: $text !important;
+    }
+    .gptwp-dashboard-master { 
+        --gold: $primary !important; 
+        background-color: var(--bg-dark) !important; 
+    }
+    .gptwp-section-box, .gptwp-card-table, .gptwp-config-form, .gptwp-fluid-form { 
+        background-color: $bg !important; 
+        color: $text !important;
+    }
+    .gptwp-btn-save, .gptwp-btn-submit, .btn-enroll { 
+        background-color: $accent !important; 
+        box-shadow: $shadow !important;
+    }
+    .gptwp-box-title, .gptwp-dash-title, .gptwp-form-head { 
+        color: $primary !important; 
+        border-color: $primary !important;
+    }
+    .gptwp-dash-tab.active {
+        color: $primary !important;
+        border-bottom-color: $primary !important;
+    }
+    .gptwp-kpi-value { 
+        color: $primary !important; 
+    }
+    </style>";
+}, 100);
+
+/**
+ * Helper para convertir HEX a RGB (para opacidad en sombras)
+ */
+function gptwp_hex2rgb($hex) {
+    if (!$hex) return [0,0,0];
+    $hex = str_replace('#', '', $hex);
+    if(strlen($hex) == 3) {
+        $r = hexdec(substr($hex,0,1).substr($hex,0,1));
+        $g = hexdec(substr($hex,1,1).substr($hex,1,1));
+        $b = hexdec(substr($hex,2,1).substr($hex,2,1));
+    } else {
+        $r = hexdec(substr($hex,0,2));
+        $g = hexdec(substr($hex,2,2));
+        $b = hexdec(substr($hex,4,2));
+    }
+    return [$r, $g, $b];
+}
 
 
