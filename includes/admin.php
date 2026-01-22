@@ -2040,12 +2040,19 @@ add_shortcode('dashboard-master', function() {
         .gptwp-modal-tab {
             background: transparent; border: none; color: #888;
             padding: 10px 20px; font-weight: 700; cursor: pointer;
-            border-bottom: 2px solid transparent; transition: 0.3s;
+            border-bottom: 2px solid transparent; transition: all 0.3s ease;
             font-size: 14px;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
         }
-        .gptwp-modal-tab:hover { color: #fff; }
+        .gptwp-modal-tab:hover { 
+            color: var(--gold);
+            background: rgba(255,255,255,0.05);
+        }
         .gptwp-modal-tab.active {
-            color: var(--gold); border-bottom-color: var(--gold);
+            color: var(--gold); 
+            border-bottom-color: var(--gold);
+            background: rgba(249,177,55,0.05);
         }
         
         .gptwp-modal-pane { display: none; animation: fadeIn 0.4s ease; }
