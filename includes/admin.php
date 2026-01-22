@@ -1818,12 +1818,28 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
         wp_send_json_error('ID de curso inválido');
     }
 
-    // Obtener alumnos del curso
-    $user_query = new WP_User_Query([
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+    $per_page = 8; // Estudiantes por página
+
+    // Argumentos de búsqueda
+    $args = [
         'meta_key' => 'course_'.$course_id.'_access_from',
-        'fields'   => 'all_with_meta'
-    ]);
+        'fields'   => 'all_with_meta',
+        'number'   => $per_page,
+        'paged'    => $page,
+    ];
+
+    // Si hay búsqueda
+    if (!empty($search)) {
+        $args['search'] = '*' . $search . '*';
+        $args['search_columns'] = ['user_login', 'user_email', 'display_name'];
+    }
+
+    $user_query = new WP_User_Query($args);
     $users = $user_query->get_results();
+    $total_users = $user_query->get_total();
+    $total_pages = ceil($total_users / $per_page);
 
     if (empty($users)) {
         wp_send_json_success('<div style="text-align:center; padding:20px; color:#888;">No hay estudiantes inscritos en este curso.</div>');
@@ -1848,13 +1864,18 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
 
     ob_start();
     ?>
-    <!-- Buscador en tiempo real -->
+    <!-- Buscador AJAX -->
     <div style="margin-bottom: 15px; display:flex; gap:10px;">
-        <input type="text" id="gptwp-course-search" placeholder="Buscar estudiante por nombre o correo..." 
+        <input type="text" id="gptwp-course-search-input" 
+               value="<?php echo esc_attr($search); ?>"
+               placeholder="Buscar estudiante por nombre o correo..." 
                style="width:100%; padding:10px; background:#111; border:1px solid #444; color:#fff; border-radius:5px;"
-               onkeyup="gptwpFilterCourseTable()">
+               onkeyup="gptwpDebounceSearch(this.value, <?php echo $course_id; ?>)">
     </div>
 
+    <?php if (empty($users)): ?>
+         <div style="text-align:center; padding:20px; color:#888;">No se encontraron estudiantes.</div>
+    <?php else: ?>
     <div style="overflow-x:auto;">
         <table id="gptwp-course-students-table" class="gptwp-crm-table" style="width:100%;">
             <thead>
@@ -1909,29 +1930,83 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
         </table>
     </div>
 
-    <script>
-    function gptwpFilterCourseTable() {
-        var input, filter, table, tr, tdName, tdEmail, i, txtValueName, txtValueEmail;
-        input = document.getElementById("gptwp-course-search");
-        filter = input.value.toUpperCase();
-        table = document.getElementById("gptwp-course-students-table");
-        tr = table.getElementsByTagName("tr");
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Paginador -->
+    <?php if ($total_pages > 1): ?>
+    <div class="gptwp-pagination" style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:15px;">
+        <?php if ($page > 1): ?>
+            <button class="gptwp-btn-action" onclick="gptwpLoadCoursePage(<?php echo $course_id; ?>, <?php echo $page - 1; ?>)">
+                 &laquo; Anterior
+            </button>
+        <?php endif; ?>
 
-        for (i = 0; i < tr.length; i++) {
-            tdName = tr[i].getElementsByTagName("td")[1]; // Columna Nombre
-            tdEmail = tr[i].getElementsByTagName("td")[2]; // Columna Email
-            
-            if (tdName && tdEmail) {
-                txtValueName = tdName.textContent || tdName.innerText;
-                txtValueEmail = tdEmail.textContent || tdEmail.innerText;
-                
-                if (txtValueName.toUpperCase().indexOf(filter) > -1 || txtValueEmail.toUpperCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
+        <span style="color:#888; font-size:12px;">Página <?php echo $page; ?> de <?php echo $total_pages; ?></span>
+
+        <?php if ($page < $total_pages): ?>
+            <button class="gptwp-btn-action" onclick="gptwpLoadCoursePage(<?php echo $course_id; ?>, <?php echo $page + 1; ?>)">
+                 Siguiente &raquo;
+            </button>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php endif; // End if empty users ?>
+
+    <script>
+    var searchTimeout;
+    function gptwpDebounceSearch(val, courseId) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            gptwpLoadCoursePage(courseId, 1, val);
+        }, 500); // 500ms delay
+    }
+
+    function gptwpLoadCoursePage(courseId, page, searchVal) {
+        // Si no se pasa searchVal, tomamos el actual del input
+        if (typeof searchVal === 'undefined') {
+            var input = document.getElementById('gptwp-course-search-input');
+            searchVal = input ? input.value : '';
         }
+
+        var container = document.getElementById('gptwp_course_modal_body');
+        container.style.opacity = '0.5';
+
+        var formData = new FormData();
+        formData.append('action', 'gptwp_get_course_details');
+        formData.append('course_id', courseId);
+        formData.append('page', page);
+        formData.append('search', searchVal);
+
+        fetch(ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                container.innerHTML = data.data;
+                container.style.opacity = '1';
+                // Re-enfocar el input si fue una búsqueda, para no perder el foco
+                var newInput = document.getElementById('gptwp-course-search-input');
+                if(newInput) {
+                    newInput.focus();
+                    // Mover cursor al final
+                    var val = newInput.value;
+                    newInput.value = '';
+                    newInput.value = val;
+                }
+            } else {
+                alert('Error al cargar datos: ' + data.data);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            container.style.opacity = '1';
+        });
     }
     </script>
     <?php
