@@ -2285,7 +2285,11 @@ function gptwp_render_config_form() {
                     btn_active_color: $('#cfg_btn_active_color').val()
                 };
                 
-                $.post(ajaxurl, configData, function(res) {
+                // Usar ajaxUrl global definido arriba o fallback a wp-admin
+                const targetUrl = typeof ajaxUrl !== 'undefined' ? ajaxUrl : (typeof ajaxurl !== 'undefined' ? ajaxurl : '/wp-admin/admin-ajax.php');
+                
+                $.post(targetUrl, configData, function(res) {
+                    console.log('Respuesta de guardado:', res);
                     if(res.success) {
                         // Mostrar Alerta Visual
                         const toast = $('#gptwp-config-toast');
@@ -2295,9 +2299,14 @@ function gptwp_render_config_form() {
                             location.reload();
                         }, 2000);
                     } else {
+                        console.error('Error al guardar configuración:', res.data);
                         alert('Error al guardar: ' + res.data);
                         btn.prop('disabled', false).html(originalText);
                     }
+                }).fail(function(xhr, status, error) {
+                    console.error('Fallo crítico en AJAX:', status, error);
+                    alert('Error crítico de conexión al servidor.');
+                    btn.prop('disabled', false).html(originalText);
                 });
             });
         });
@@ -2326,7 +2335,7 @@ function gptwp_render_config_form() {
  * Handler AJAX para guardar la configuración
  */
 add_action('wp_ajax_gptwp_save_dashboard_config', function() {
-    if (!current_user_can('administrator')) wp_send_json_error('Acceso denegado');
+    if (!current_user_can('manage_options')) wp_send_json_error('Acceso denegado: Se requiere capacidad manage_options');
     
     $config = [
         'primary_color'    => sanitize_hex_color($_POST['primary_color']),
