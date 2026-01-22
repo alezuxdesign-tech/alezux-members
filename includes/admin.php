@@ -1897,9 +1897,12 @@ add_shortcode('dashboard-master', function() {
             <!-- TAB 2: FINANZAS (LAYOUT COMPUESTO) -->
             <div id="tab-finanzas" class="gptwp-tab-pane">
                 
-                <!-- Fila 1: Filtros -->
-                <div style="margin-bottom: 20px;">
+                <!-- Fila 1: Filtros + Botón Modal -->
+                <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
                     <?php echo do_shortcode('[finanzas_filtros]'); ?>
+                    <button class="gptwp-btn-action" onclick="document.getElementById('gptwp-fin-modal').style.display='flex'">
+                        <span class="dashicons dashicons-plus-alt2"></span> Nuevo / Importar
+                    </button>
                 </div>
 
                 <!-- Fila 2: KPIs (Grid 4 columnas) -->
@@ -1954,6 +1957,23 @@ add_shortcode('dashboard-master', function() {
         </div>
     </div>
 
+    <!-- MODAL FINANZAS -->
+    <div id="gptwp-fin-modal" class="gptwp-modal">
+        <div class="gptwp-modal-content">
+            <span class="gptwp-close" onclick="document.getElementById('gptwp-fin-modal').style.display='none'">&times;</span>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                <div>
+                    <h3 class="gptwp-modal-title">Registro Manual</h3>
+                    <?php echo do_shortcode('[gptwp_registro_estudiante]'); ?>
+                </div>
+                <div>
+                    <h3 class="gptwp-modal-title">Importación Masiva</h3>
+                    <?php echo do_shortcode('[gptwp_importador_masivo]'); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ESTILOS (SCOPED) -->
     <style>
         /* Variables y Reset Básico */
@@ -1969,6 +1989,38 @@ add_shortcode('dashboard-master', function() {
             margin: 0;
             box-sizing: border-box;
         }
+
+        /* Botón Acción */
+        .gptwp-btn-action {
+            background: var(--gold); color: #000; border: none; 
+            padding: 10px 20px; border-radius: 50px; font-weight: 800; 
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
+            transition: 0.3s;
+        }
+        .gptwp-btn-action:hover { box-shadow: 0 0 15px rgba(249,177,55,0.4); transform: translateY(-2px); }
+
+        /* MODAL */
+        .gptwp-modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            align-items: center; justify-content: center;
+        }
+        .gptwp-modal-content {
+            background-color: #1a1a1a; margin: auto; padding: 40px;
+            border: 1px solid var(--gold);
+            width: 90%; max-width: 1100px;
+            border-radius: 12px; position: relative;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .gptwp-close {
+            color: #aaaaaa; float: right; font-size: 28px; font-weight: bold;
+            position: absolute; top: 15px; right: 25px; cursor: pointer;
+        }
+        .gptwp-close:hover { color: #fff; }
+        .gptwp-modal-title { color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 15px; margin-top: 0; }
+
 
         /* Asegurar que todos los hijos directos sean responsivos */
         .gptwp-dashboard-master * {
