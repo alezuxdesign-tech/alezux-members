@@ -2171,6 +2171,24 @@ add_shortcode('dashboard-master', function() {
         }
         .gptwp-box-title { margin-top: 0; font-size: 16px; color: var(--gold); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
 
+        /* Estilos Específicos para Modal de Cursos */
+        #gptwp_course_modal table.gptwp-crm-table {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid #333;
+        }
+        #gptwp_course_modal table.gptwp-crm-table th {
+            background: #000;
+            color: var(--gold);
+            border-bottom: 2px solid #333;
+        }
+        #gptwp_course_modal table.gptwp-crm-table td {
+            border-bottom: 1px solid #222;
+        }
+        #gptwp_course_modal .gptwp-avatar-img {
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+        }
+
         /* Layout Dividido (Manual + Tabla) */
         .gptwp-finance-split {
             display: grid;
@@ -2489,17 +2507,48 @@ add_shortcode('admin_tabla_cursos', function() {
                     <?php else: foreach ($courses as $course): 
                         $course_id = $course->ID;
                         
-                        // NOTA: Para V1 usamos una query de meta para contar usuarios.
-                        // Puede ser lento si hay miles de usuarios/cursos.
-                        $user_query = new WP_User_Query([
-                            'meta_key' => 'course_'.$course_id.'_access_from',
-                            'fields' => 'ID'
-                        ]);
-                        $student_count = $user_query->get_total();
+                        // 1. Obtener Estudiantes (Método Compatible LearnDash)
+                        // Intentamos usar funciones nativas de LD para mayor precisión
+                        $enrolled_users = [];
+                        if (function_exists('learndash_get_course_users_access_from_meta')) {
+                            $enrolled_users = learndash_get_course_users_access_from_meta($course_id);
+                        }
+                        // Fallback si la función devuelve algo raro o está vacía (intentar query manual mejorada)
+                        if (empty($enrolled_users)) {
+                            $user_query = new WP_User_Query([
+                                'meta_key' => 'course_'.$course_id.'_access_from',
+                                'fields'   => 'ID'
+                            ]);
+                            $enrolled_users = $user_query->get_results();
+                        }
+
+                        $student_count = count($enrolled_users);
                         
-                        // Progreso Global: Placeholder por rendimiento.
-                        // Se podría implementar con una tarea cron o AJAX por demanda.
-                        $avg_progress = '-'; 
+                        // 2. Calcular Progreso Global (Cacheado por 1 hora para rendimiento)
+                        $transient_key = 'gptwp_course_progress_' . $course_id;
+                        $avg_progress = get_transient($transient_key);
+
+                        if ($avg_progress === false) {
+                            if ($student_count > 0) {
+                                $total_percentage = 0;
+                                // Limitamos el cálculo a los primeros 100 estudiantes para no matar el servidor en vivo
+                                // Opcional: Ejecutar en background. Por ahora, sample de 100.
+                                $sample_users = array_slice($enrolled_users, 0, 100); 
+                                
+                                foreach ($sample_users as $u_id) {
+                                    // Si $u_id es objeto (WP_User), sacar ID
+                                    $uid = is_object($u_id) ? $u_id->ID : $u_id;
+                                    
+                                    $p = learndash_user_get_course_progress($uid, $course_id);
+                                    $pct = isset($p['percentage']) ? $p['percentage'] : 0;
+                                    $total_percentage += $pct;
+                                }
+                                $avg_progress = round($total_percentage / count($sample_users));
+                            } else {
+                                $avg_progress = 0;
+                            }
+                            set_transient($transient_key, $avg_progress, HOUR_IN_SECONDS);
+                        }
                         ?>
                         <tr>
                             <td>
@@ -2509,10 +2558,12 @@ add_shortcode('admin_tabla_cursos', function() {
                                 <span class="gptwp-badge"><?php echo $student_count; ?> Estudiantes</span>
                             </td>
                             <td>
-                                <div class="gptwp-progress-bar-wrapper" style="width:100px;">
-                                    <div class="gptwp-progress-bar" style="width: 0%; background: #333;"></div>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-weight:700; color:#fff; width:35px;"><?php echo $avg_progress; ?>%</span>
+                                    <div class="gptwp-progress-bar-wrapper" style="width:100px;">
+                                        <div class="gptwp-progress-bar" style="width: <?php echo $avg_progress; ?>%; background: <?php echo ($avg_progress >= 100 ? '#4dff88' : 'var(--gold)'); ?>;"></div>
+                                    </div>
                                 </div>
-                                <small style="color:#666;">(N/A)</small>
                             </td>
                             <td style="text-align:right;">
                                 <button class="gptwp-btn-action btn-view-course-details" 
