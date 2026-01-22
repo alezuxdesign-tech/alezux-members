@@ -2343,19 +2343,22 @@ add_shortcode('dashboard-master', function() {
 
     <!-- INTERACTIVIDAD JS (Simple Tab Switcher) -->
     <script>
+    <script>
+    // Ensure ajaxUrl is available globally for all functions
+    const ajaxUrl = "<?php echo admin_url('admin-ajax.php'); ?>";
+
     document.addEventListener('DOMContentLoaded', function() {
         // --- 0. Global Course Helpers (Exposed to Window) ---
-        // Necesarios para el onclick del HTML inyectado vía AJAX
+        window.searchTimeout = null; // Initialize globally
+
         window.gptwpDebounceSearch = function(val, courseId) {
-            clearTimeout(window.searchTimeout);
+            if(window.searchTimeout) clearTimeout(window.searchTimeout);
             window.searchTimeout = setTimeout(function() {
                 gptwpLoadCoursePage(courseId, 1, val);
             }, 500);
         };
 
         window.gptwpLoadCoursePage = function(courseId, page, searchVal) {
-            var ajaxUrl = "<?php echo admin_url('admin-ajax.php'); ?>";
-            
             // Si no se pasa searchVal, tomamos el actual del input
             if (typeof searchVal === 'undefined') {
                 var input = document.getElementById('gptwp-course-search-input');
@@ -2371,7 +2374,7 @@ add_shortcode('dashboard-master', function() {
             formData.append('page', page);
             formData.append('search', searchVal);
 
-            fetch(ajaxUrl, {
+            fetch(ajaxUrl, { // Uses the global const defined above
                 method: 'POST',
                 body: formData
             })
