@@ -1952,59 +1952,7 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
 
     <?php endif; // End if empty users ?>
 
-    <script>
-    var searchTimeout;
-    function gptwpDebounceSearch(val, courseId) {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            gptwpLoadCoursePage(courseId, 1, val);
-        }, 500); // 500ms delay
-    }
 
-    function gptwpLoadCoursePage(courseId, page, searchVal) {
-        // Si no se pasa searchVal, tomamos el actual del input
-        if (typeof searchVal === 'undefined') {
-            var input = document.getElementById('gptwp-course-search-input');
-            searchVal = input ? input.value : '';
-        }
-
-        var container = document.getElementById('gptwp_course_modal_body');
-        container.style.opacity = '0.5';
-
-        var formData = new FormData();
-        formData.append('action', 'gptwp_get_course_details');
-        formData.append('course_id', courseId);
-        formData.append('page', page);
-        formData.append('search', searchVal);
-
-        fetch(ajaxurl, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if(data.success) {
-                container.innerHTML = data.data;
-                container.style.opacity = '1';
-                // Re-enfocar el input si fue una búsqueda, para no perder el foco
-                var newInput = document.getElementById('gptwp-course-search-input');
-                if(newInput) {
-                    newInput.focus();
-                    // Mover cursor al final
-                    var val = newInput.value;
-                    newInput.value = '';
-                    newInput.value = val;
-                }
-            } else {
-                alert('Error al cargar datos: ' + data.data);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            container.style.opacity = '1';
-        });
-    }
-    </script>
     <?php
     $html = ob_get_clean();
     wp_send_json_success($html);
@@ -2396,8 +2344,60 @@ add_shortcode('dashboard-master', function() {
     <!-- INTERACTIVIDAD JS (Simple Tab Switcher) -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- 0. Global Course Helpers (Exposed to Window) ---
+        // Necesarios para el onclick del HTML inyectado vía AJAX
+        window.gptwpDebounceSearch = function(val, courseId) {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(function() {
+                gptwpLoadCoursePage(courseId, 1, val);
+            }, 500);
+        };
+
+        window.gptwpLoadCoursePage = function(courseId, page, searchVal) {
+            var ajaxUrl = "<?php echo admin_url('admin-ajax.php'); ?>";
+            
+            // Si no se pasa searchVal, tomamos el actual del input
+            if (typeof searchVal === 'undefined') {
+                var input = document.getElementById('gptwp-course-search-input');
+                searchVal = input ? input.value : '';
+            }
+
+            var container = document.getElementById('gptwp_course_modal_body');
+            if(container) container.style.opacity = '0.5';
+
+            var formData = new FormData();
+            formData.append('action', 'gptwp_get_course_details');
+            formData.append('course_id', courseId);
+            formData.append('page', page);
+            formData.append('search', searchVal);
+
+            fetch(ajaxUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(container) container.style.opacity = '1';
+                if(data.success) {
+                    if(container) container.innerHTML = data.data;
+                    // Re-enfocar input
+                    var newInput = document.getElementById('gptwp-course-search-input');
+                    if(newInput) {
+                        newInput.focus();
+                        var val = newInput.value;
+                        newInput.value = '';
+                        newInput.value = val;
+                    }
+                } else {
+                    alert('Error: ' + (data.data || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if(container) container.style.opacity = '1';
+            });
+        };
         
-        // --- 1. Tabs Principales Dashboard ---
         // --- 1. Tabs Principales Dashboard ---
         const tabs = document.querySelectorAll('.gptwp-dash-tab');
         const panes = document.querySelectorAll('.gptwp-tab-pane');
