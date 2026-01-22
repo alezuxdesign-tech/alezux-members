@@ -1792,6 +1792,11 @@ add_action('wp_ajax_gptwp_load_dashboard_tab', function() {
         case 'tab-logros':
             $content = do_shortcode('[admin_crear_logro]');
             break;
+
+        case 'tab-cursos':
+            $content = do_shortcode('[admin_tabla_cursos]');
+            break;
+
             
         default:
             wp_send_json_error('Tab desconocido');
@@ -1799,6 +1804,74 @@ add_action('wp_ajax_gptwp_load_dashboard_tab', function() {
 
     wp_send_json_success($content);
 });
+
+// ==============================================================================
+// === AJAX HANDLER: DETALLES DEL CURSO (MODAL) ===
+// ==============================================================================
+add_action('wp_ajax_gptwp_get_course_details', function() {
+    if (!current_user_can('manage_options') && !current_user_can('shop_manager')) {
+        wp_send_json_error('Permisos insuficientes');
+    }
+
+    $course_id = isset($_POST['course_id']) ? intval($_POST['course_id']) : 0;
+    if (!$course_id) {
+        wp_send_json_error('ID de curso inválido');
+    }
+
+    // Obtener alumnos del curso
+    $user_query = new WP_User_Query([
+        'meta_key' => 'course_'.$course_id.'_access_from',
+        'fields'   => 'all_with_meta'
+    ]);
+    $users = $user_query->get_results();
+
+    if (empty($users)) {
+        wp_send_json_success('<div style="text-align:center; padding:20px; color:#888;">No hay estudiantes inscritos en este curso.</div>');
+    }
+
+    ob_start();
+    ?>
+    <table class="gptwp-crm-table" style="width:100%;">
+        <thead>
+            <tr>
+                <th width="50"></th>
+                <th>Estudiante</th>
+                <th>Email</th>
+                <th>Progreso</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($users as $user): 
+                $progress = learndash_user_get_course_progress($user->ID, $course_id);
+                $percentage = isset($progress['percentage']) ? $progress['percentage'] : 0;
+                $completed_steps = isset($progress['completed']) ? $progress['completed'] : 0;
+                $total_steps = isset($progress['total']) ? $progress['total'] : 0;
+            ?>
+            <tr>
+                <td><?php echo get_avatar($user->ID, 40, '', '', ['class' => 'gptwp-avatar-img']); ?></td>
+                <td>
+                    <strong><?php echo esc_html($user->display_name); ?></strong><br>
+                    <small style="color:#666;">ID: <?php echo $user->ID; ?></small>
+                </td>
+                <td><?php echo esc_html($user->user_email); ?></td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-weight:700; color:#fff; width:35px;"><?php echo $percentage; ?>%</span>
+                        <div class="gptwp-progress-bar-wrapper" style="width:120px; height:6px;">
+                            <div class="gptwp-progress-bar" style="width: <?php echo $percentage; ?>%; background: var(--gold);"></div>
+                        </div>
+                    </div>
+                    <small style="color:#666;"><?php echo $completed_steps . '/' . $total_steps; ?> Lecciones</small>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php
+    $html = ob_get_clean();
+    wp_send_json_success($html);
+});
+
 
 
 // ==============================================================================
@@ -1823,7 +1896,11 @@ add_shortcode('dashboard-master', function() {
                 <button class="gptwp-dash-tab active" data-target="tab-estudiantes">
                     <span class="dashicons dashicons-welcome-learn-more"></span> Estudiantes
                 </button>
+                <button class="gptwp-dash-tab" data-target="tab-cursos">
+                    <span class="dashicons dashicons-book"></span> Cursos
+                </button>
                 <button class="gptwp-dash-tab" data-target="tab-finanzas">
+
                     <span class="dashicons dashicons-chart-line"></span> Finanzas
                 </button>
                 <button class="gptwp-dash-tab" data-target="tab-email">
@@ -1866,6 +1943,15 @@ add_shortcode('dashboard-master', function() {
                 </div>
 
             </div>
+
+            <!-- TAB 1.5: CURSOS -->
+            <div id="tab-cursos" class="gptwp-tab-pane" data-loaded="false">
+                 <div class="gptwp-loader-container" style="text-align:center; padding:50px; color:#666;">
+                    <span class="dashicons dashicons-update" style="animation: spin 1s infinite linear; font-size:40px; width:40px; height:40px;"></span>
+                    <p style="margin-top:10px;">Cargando Cursos...</p>
+                </div>
+            </div>
+
 
             <!-- TAB 2: FINANZAS (LAYOUT COMPUESTO) -->
             <div id="tab-finanzas" class="gptwp-tab-pane" data-loaded="false">
@@ -2182,7 +2268,49 @@ add_shortcode('dashboard-master', function() {
             });
         });
 
-        // --- 2. Finance Module Logic (Lazy Loaded) ---
+        // --- 2. Delegación Global de Eventos (Modales y Acciones Dinámicas) ---
+        document.body.addEventListener('click', function(e) {
+            // A. Modal Detalles Curso
+            if (e.target.closest('.btn-view-course-details')) {
+                const btn = e.target.closest('.btn-view-course-details');
+                const courseId = btn.getAttribute('data-course-id');
+                const courseName = btn.getAttribute('data-course-name');
+                
+                // Buscar modal (puede haber sido cargado vía AJAX)
+                let modal = document.getElementById('gptwp_course_modal');
+                // Si no está en body (por AJAX), moverlo si es necesario o asegurarse que está visible
+                if(modal && modal.parentNode !== document.body) {
+                    document.body.appendChild(modal); // Mover al root para evitar z-index issues
+                }
+
+                if(modal) {
+                    document.getElementById('modal_course_name_title').textContent = courseName;
+                    modal.style.display = 'flex';
+                    
+                    const modalBody = document.getElementById('gptwp_course_modal_body');
+                    modalBody.innerHTML = '<div style="text-align:center; padding:40px;"><span class="dashicons dashicons-update spin" style="font-size:30px;"></span> Cargando estudiantes...</div>';
+                    
+                    const formData = new FormData();
+                    formData.append('action', 'gptwp_get_course_details');
+                    formData.append('course_id', courseId);
+                    
+                    fetch(ajaxUrl, { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) { modalBody.innerHTML = data.data; } 
+                        else { modalBody.innerHTML = '<p style="color:red; text-align:center;">Error: ' + data.data + '</p>'; }
+                    })
+                    .catch(err => { console.error(err); modalBody.innerHTML = '<p style="color:red; text-align:center;">Error de conexión.</p>'; });
+                }
+            }
+            // Cerrar cualquier modal al hacer click en close o overlay
+            if (e.target.classList.contains('gptwp-modal-overlay') || e.target.classList.contains('gptwp-modal-close')) {
+                const modal = e.target.closest('.gptwp-modal-overlay');
+                if(modal) modal.style.display = 'none';
+            }
+        });
+
+        // --- 3. Finance Module Logic (Lazy Loaded) ---
         window.gptwpInitFinance = function() {
             const dateRangeInput = document.getElementById('fin_date_range');
             if(!dateRangeInput || dateRangeInput.classList.contains('initialized')) return;
@@ -2319,6 +2447,102 @@ add_shortcode('dashboard-master', function() {
 
     });
     </script>
+    <?php
+    return ob_get_clean();
+});
+
+// ==============================================================================
+// === MÓDULO CURSOS: Visualización y Progreso ===
+// ==============================================================================
+// Uso: [admin_tabla_cursos]
+
+add_shortcode('admin_tabla_cursos', function() {
+    if (!current_user_can('manage_options') && !current_user_can('shop_manager')) {
+        return 'Acceso denegado';
+    }
+
+    // 1. Obtener todos los cursos publicados
+    $args = [
+        'post_type'      => 'sfwd-courses',
+        'posts_per_page' => -1,
+        'post_status'    => 'publish'
+    ];
+    $courses = get_posts($args);
+
+    ob_start();
+    ?>
+    <div class="gptwp-card-table">
+        <h3 class="gptwp-box-title" style="margin-bottom:20px;">Cursos Activos</h3>
+        <div class="gptwp-table-responsive">
+            <table class="gptwp-crm-table">
+                <thead>
+                    <tr>
+                        <th>Nombre del Curso</th>
+                        <th>Estudiantes</th>
+                        <th>Progreso Global</th>
+                        <th style="text-align:right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($courses)): ?>
+                        <tr><td colspan="4" style="text-align:center;">No hay cursos activos.</td></tr>
+                    <?php else: foreach ($courses as $course): 
+                        $course_id = $course->ID;
+                        
+                        // NOTA: Para V1 usamos una query de meta para contar usuarios.
+                        // Puede ser lento si hay miles de usuarios/cursos.
+                        $user_query = new WP_User_Query([
+                            'meta_key' => 'course_'.$course_id.'_access_from',
+                            'fields' => 'ID'
+                        ]);
+                        $student_count = $user_query->get_total();
+                        
+                        // Progreso Global: Placeholder por rendimiento.
+                        // Se podría implementar con una tarea cron o AJAX por demanda.
+                        $avg_progress = '-'; 
+                        ?>
+                        <tr>
+                            <td>
+                                <strong><?php echo esc_html($course->post_title); ?></strong>
+                            </td>
+                            <td>
+                                <span class="gptwp-badge"><?php echo $student_count; ?> Estudiantes</span>
+                            </td>
+                            <td>
+                                <div class="gptwp-progress-bar-wrapper" style="width:100px;">
+                                    <div class="gptwp-progress-bar" style="width: 0%; background: #333;"></div>
+                                </div>
+                                <small style="color:#666;">(N/A)</small>
+                            </td>
+                            <td style="text-align:right;">
+                                <button class="gptwp-btn-action btn-view-course-details" 
+                                        data-course-id="<?php echo $course_id; ?>"
+                                        data-course-name="<?php echo esc_attr($course->post_title); ?>">
+                                    <span class="dashicons dashicons-visibility"></span> Ver Detalles
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLES DEL CURSO -->
+    <div id="gptwp_course_modal" class="gptwp-modal-overlay">
+        <div class="gptwp-modal-content" style="max-width:800px;">
+            <div class="gptwp-modal-header">
+                <h3 style="margin:0; color:#fff;">Detalle del Curso: <span id="modal_course_name_title">...</span></h3>
+                <button class="gptwp-modal-close" onclick="document.getElementById('gptwp_course_modal').style.display='none'">&times;</button>
+            </div>
+            <div id="gptwp_course_modal_body" class="gptwp-modal-body-scroll">
+                <div style="text-align:center; padding:40px;">
+                    <span class="dashicons dashicons-update spin" style="font-size:30px;"></span> Cargando estudiantes...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php
     return ob_get_clean();
 });
