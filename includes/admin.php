@@ -1869,7 +1869,25 @@ add_shortcode('dashboard-master', function() {
             
             <!-- TAB 1: ESTUDIANTES -->
             <div id="tab-estudiantes" class="gptwp-tab-pane active">
-                <?php echo do_shortcode('[admin_registrar_estudiante]'); ?>
+                
+                <!-- KPIs Estudiantes -->
+                 <div class="gptwp-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+                    <div class="gptwp-kpi-card">
+                        <small>Total Alumnos</small>
+                        <div class="gptwp-kpi-value"><?php echo do_shortcode('[kpi_total_alumnos]'); ?></div>
+                    </div>
+                    <div class="gptwp-kpi-card">
+                        <small>Nuevos este mes</small>
+                        <div class="gptwp-kpi-value text-gold"><?php echo do_shortcode('[kpi_nuevos_alumnos]'); ?></div>
+                    </div>
+                </div>
+
+                <!-- Gestor de Permisos -->
+                <div class="gptwp-section-box">
+                    <h4 class="gptwp-box-title">Gestión de Accesos y Permisos</h4>
+                    <?php echo do_shortcode('[admin_gestor_permisos]'); ?>
+                </div>
+
             </div>
 
             <!-- TAB 2: FINANZAS (LAYOUT COMPUESTO) -->
