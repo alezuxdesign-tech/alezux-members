@@ -2399,29 +2399,6 @@ add_shortcode('dashboard-master', function() {
     };
 
     document.addEventListener('DOMContentLoaded', function() {
-
-            .then(response => response.json())
-            .then(data => {
-                if(container) container.style.opacity = '1';
-                if(data.success) {
-                    if(container) container.innerHTML = data.data;
-                    // Re-enfocar input
-                    var newInput = document.getElementById('gptwp-course-search-input');
-                    if(newInput) {
-                        newInput.focus();
-                        var val = newInput.value;
-                        newInput.value = '';
-                        newInput.value = val;
-                    }
-                } else {
-                    alert('Error: ' + (data.data || 'Unknown error'));
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                if(container) container.style.opacity = '1';
-            });
-        };
         
         // --- 1. Tabs Principales Dashboard ---
         const tabs = document.querySelectorAll('.gptwp-dash-tab');
