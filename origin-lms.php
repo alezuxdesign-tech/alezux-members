@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Alezux Members
  * Plugin URI:  https://github.com/alezuxdesign-tech/members
- * Description: Trabajo desarrollado por una empresa integral en desarrollo de aplicaciones personalizadas.
- * Version:     2.0.5
+ * Description: Sistema de gestión de cursos y estudiantes.
+ * Version:     2.0.6
  * Author:      Alezux Design
  * License:     GPL v2 or later
  */
