@@ -1930,10 +1930,6 @@ add_action('wp_ajax_gptwp_get_course_details', function() {
         </table>
     </div>
 
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
     
     <!-- Paginador -->
     <?php if ($total_pages > 1): ?>
