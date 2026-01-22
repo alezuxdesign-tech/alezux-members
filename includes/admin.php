@@ -1965,15 +1965,22 @@ add_shortcode('dashboard-master', function() {
     <div id="gptwp-fin-modal" class="gptwp-modal">
         <div class="gptwp-modal-content">
             <span class="gptwp-close" onclick="document.getElementById('gptwp-fin-modal').style.display='none'">&times;</span>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
-                <div>
-                    <h3 class="gptwp-modal-title">Registro Manual</h3>
-                    <?php echo do_shortcode('[gptwp_registro_estudiante]'); ?>
-                </div>
-                <div>
-                    <h3 class="gptwp-modal-title">Importación Masiva</h3>
-                    <?php echo do_shortcode('[gptwp_importador_masivo]'); ?>
-                </div>
+            
+            <!-- Modal Tabs -->
+            <div class="gptwp-modal-tabs">
+                <button class="gptwp-modal-tab active" data-target="m-tab-manual">Registro Manual</button>
+                <button class="gptwp-modal-tab" data-target="m-tab-import">Importación Masiva</button>
+            </div>
+
+            <!-- Modal Content Panes -->
+            <div id="m-tab-manual" class="gptwp-modal-pane active">
+                <h3 class="gptwp-modal-title">Nuevo Estudiante</h3>
+                <?php echo do_shortcode('[gptwp_registro_estudiante]'); ?>
+            </div>
+            
+            <div id="m-tab-import" class="gptwp-modal-pane">
+                <h3 class="gptwp-modal-title">Carga Masiva (CSV/Excel)</h3>
+                <?php echo do_shortcode('[gptwp_importador_masivo]'); ?>
             </div>
         </div>
     </div>
@@ -2003,17 +2010,18 @@ add_shortcode('dashboard-master', function() {
         }
         .gptwp-btn-action:hover { box-shadow: 0 0 15px rgba(249,177,55,0.4); transform: translateY(-2px); }
 
-        /* MODAL */
+        /* MODAL ESTRUCTURA */
         .gptwp-modal {
             display: none; position: fixed; z-index: 9999; left: 0; top: 0;
             width: 100%; height: 100%; overflow: auto;
             background-color: rgba(0,0,0,0.8);
             align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
         }
         .gptwp-modal-content {
             background-color: #1a1a1a; margin: auto; padding: 40px;
             border: 1px solid var(--gold);
-            width: 90%; max-width: 1100px;
+            width: 90%; max-width: 800px; /* Más estrecho para estética */
             border-radius: 12px; position: relative;
             box-shadow: 0 10px 50px rgba(0,0,0,0.5);
             max-height: 90vh; overflow-y: auto;
@@ -2021,9 +2029,29 @@ add_shortcode('dashboard-master', function() {
         .gptwp-close {
             color: #aaaaaa; float: right; font-size: 28px; font-weight: bold;
             position: absolute; top: 15px; right: 25px; cursor: pointer;
+            z-index: 20;
         }
         .gptwp-close:hover { color: #fff; }
-        .gptwp-modal-title { color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 15px; margin-top: 0; }
+        
+        /* MODAL TABS */
+        .gptwp-modal-tabs {
+            display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+        }
+        .gptwp-modal-tab {
+            background: transparent; border: none; color: #888;
+            padding: 10px 20px; font-weight: 700; cursor: pointer;
+            border-bottom: 2px solid transparent; transition: 0.3s;
+            font-size: 14px;
+        }
+        .gptwp-modal-tab:hover { color: #fff; }
+        .gptwp-modal-tab.active {
+            color: var(--gold); border-bottom-color: var(--gold);
+        }
+        
+        .gptwp-modal-pane { display: none; animation: fadeIn 0.4s ease; }
+        .gptwp-modal-pane.active { display: block; }
+        
+        .gptwp-modal-title { color: var(--gold); margin-bottom: 20px; margin-top: 0; font-size: 18px; }
 
 
         /* Asegurar que todos los hijos directos sean responsivos */
@@ -2147,6 +2175,8 @@ add_shortcode('dashboard-master', function() {
     <!-- INTERACTIVIDAD JS (Simple Tab Switcher) -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- 1. Tabs Principales Dashboard ---
         const tabs = document.querySelectorAll('.gptwp-dash-tab');
         const panes = document.querySelectorAll('.gptwp-tab-pane');
 
@@ -2173,6 +2203,23 @@ add_shortcode('dashboard-master', function() {
                 }
             });
         });
+
+        // --- 2. Tabs del Modal (NUEVO) ---
+        const modalTabs = document.querySelectorAll('.gptwp-modal-tab');
+        const modalPanes = document.querySelectorAll('.gptwp-modal-pane');
+
+        modalTabs.forEach(mtab => {
+            mtab.addEventListener('click', function() {
+                modalTabs.forEach(t => t.classList.remove('active'));
+                modalPanes.forEach(p => p.classList.remove('active'));
+
+                this.classList.add('active');
+                const targetId = this.getAttribute('data-target');
+                const targetPane = document.getElementById(targetId);
+                if(targetPane) targetPane.classList.add('active');
+            });
+        });
+
     });
     </script>
     <?php
