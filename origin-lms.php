@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Alezux Members
- * Plugin URI:  https://github.com/alezuxdesign-tech/members
+ * Plugin URI:  https://alezuxdesign.com/
  * Description: Sistema de gestión de cursos y estudiantes.
  * Version:     2.0.6
  * Author:      Alezux Design
